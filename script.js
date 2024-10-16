@@ -1,10 +1,15 @@
 const quizAPI = 'https://the-trivia-api.com/v2/questions';
 
-let quizData = [];
+let easyQuestions = [];
+let mediumQuestions = [];
+let hardQuestions = [];
 let currentCategory = "";
 let player1Score = 0;
 let player2Score = 0;
-let currentQuestionIndex = 0;
+let currentDifficulty = 'easy';
+let currentEasyQuestionIndex = 0;
+let currentMediumQuestionIndex = 0;
+let currentHardQuestionIndex = 0;
 let currentPlayer = 'Player 1';
 
 document.querySelector('.form').addEventListener('submit', function (event) {
@@ -41,30 +46,73 @@ function fetchCategories() {
 fetchCategories();
 
 function fetchQuestionsForCategory(category) {
-    fetch(`${quizAPI}?categories=${category}&limit=6`)
+    let fetchCount = 0;
+
+    fetch(`${quizAPI}?categories=${category}&limit=2&difficulty=easy`)
         .then(response => response.json())
         .then(data => {
-            quizData = data;
-            currentQuestionIndex = 0;
-            showNextQuestion();
+            easyQuestions = data;
+            fetchCount++;
+            if (fetchCount === 3) {
+                showNextQuestion();
+            }
         })
-        .catch(error => console.error('fetching data:', error));
+        .catch(error => console.error('fetching easy questions:', error));
+
+    fetch(`${quizAPI}?categories=${category}&limit=2&difficulty=medium`)
+        .then(response => response.json())
+        .then(data => {
+            mediumQuestions = data;
+            fetchCount++;
+            if (fetchCount === 3) {
+                showNextQuestion();
+            }
+        })
+        .catch(error => console.error('fetching medium questions:', error));
+
+    fetch(`${quizAPI}?categories=${category}&limit=2&difficulty=hard`)
+        .then(response => response.json())
+        .then(data => {
+            hardQuestions = data;
+            fetchCount++;
+            if (fetchCount === 3) {
+                showNextQuestion();
+            }
+        })
+        .catch(error => console.error('fetching hard questions:', error));
 }
 
 function showNextQuestion() {
-    if (currentQuestionIndex >= quizData.length) {
-        endGame();
-        return;
+    let questionData;
+
+    if (currentDifficulty === 'easy') {
+        if (currentEasyQuestionIndex >= easyQuestions.length) {
+            currentDifficulty = 'medium';
+            showNextQuestion();
+            return;
+        }
+        questionData = easyQuestions[currentEasyQuestionIndex];
+        currentEasyQuestionIndex++;
+    } else if (currentDifficulty === 'medium') {
+        if (currentMediumQuestionIndex >= mediumQuestions.length) {
+            currentDifficulty = 'hard';
+            showNextQuestion();
+            return;
+        }
+        questionData = mediumQuestions[currentMediumQuestionIndex];
+        currentMediumQuestionIndex++;
+    } else if (currentDifficulty === 'hard') {
+        if (currentHardQuestionIndex >= hardQuestions.length) {
+            endGame();
+            return;
+        }
+        questionData = hardQuestions[currentHardQuestionIndex];
+        currentHardQuestionIndex++;
     }
 
-    const questionData = quizData[currentQuestionIndex];
-    const difficulty = questionData.difficulty;
-
     const playerDivId = currentPlayer === 'Player 1' ? 'player-1-questions' : 'player-2-questions';
-
     document.getElementById(playerDivId).innerHTML = '';
-
-    displayQuestion(playerDivId, questionData, difficulty, currentPlayer);
+    displayQuestion(playerDivId, questionData, currentDifficulty, currentPlayer);
 
     currentPlayer = currentPlayer === 'Player 1' ? 'Player 2' : 'Player 1';
 }
@@ -79,7 +127,7 @@ function displayQuestion(playerDivId, questionData, difficulty, player) {
     const questionHTML = `
         <p><b>${difficulty.toUpperCase()} Question for ${player}:</b> ${questionText}</p>
         <ul>
-            ${allOptions.map((option, index) => `<li onclick="checkAnswer('${option}', '${correctAnswer}', '${difficulty}', '${player}')">${option}</li>`).join('')}
+            ${allOptions.map(option => `<li onclick="checkAnswer('${option}', '${correctAnswer}', '${difficulty}', '${player}')">${option}</li>`).join('')}
         </ul>
     `;
 
@@ -88,18 +136,24 @@ function displayQuestion(playerDivId, questionData, difficulty, player) {
 
 function checkAnswer(selectedAnswer, correctAnswer, difficulty, player) {
     if (selectedAnswer === correctAnswer) {
+        let scoreIncrement;
         if (difficulty === 'easy') {
-            player === 'Player 1' ? player1Score += 10 : player2Score += 10;
+            scoreIncrement = 10;
         } else if (difficulty === 'medium') {
-            player === 'Player 1' ? player1Score += 15 : player2Score += 15;
+            scoreIncrement = 15;
         } else if (difficulty === 'hard') {
-            player === 'Player 1' ? player1Score += 20 : player2Score += 20;
+            scoreIncrement = 20;
+        }
+
+        if (player === 'Player 1') {
+            player1Score += scoreIncrement;
+        } else {
+            player2Score += scoreIncrement;
         }
 
         updateScores();
     }
 
-    currentQuestionIndex++;
     showNextQuestion();
 }
 
@@ -109,13 +163,14 @@ function updateScores() {
 }
 
 function endGame() {
+    let winner;
     if (player1Score > player2Score) {
-        alert('Player 1 wins with ' + player1Score + ' points!');
+        winner = 'Player 1 wins with ' + player1Score + ' points!';
     } else if (player2Score > player1Score) {
-        alert('Player 2 wins with ' + player2Score + ' points!');
+        winner = 'Player 2 wins with ' + player2Score + ' points!';
     } else {
-        alert('It\'s a tie!');
+        winner = "It's a tie!";
     }
-
+    alert(winner);
     location.reload();
 }
