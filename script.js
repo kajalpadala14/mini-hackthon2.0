@@ -1,16 +1,23 @@
 const quizAPI = 'https://the-trivia-api.com/v2/questions';
 
-let easyQuestions = [];
-let mediumQuestions = [];
-let hardQuestions = [];
-let currentCategory = "";
+let easy = [];
+let medium = [];
+let hard = [];
 let player1Score = 0;
 let player2Score = 0;
-let currentDifficulty = 'easy';
-let currentEasyQuestionIndex = 0;
-let currentMediumQuestionIndex = 0;
-let currentHardQuestionIndex = 0;
+let curDifficulty = 'easy';
+let easyQuestionIndex = 0;
+let mediumQuestionIndex = 0;
+let hardQuestionIndex = 0;
 let currentPlayer = 'Player 1';
+
+fetch(quizAPI)
+.then(response => response.json())
+.then(data => {
+    console.log(data);
+    
+})
+
 
 document.querySelector('.form').addEventListener('submit', function (event) {
     event.preventDefault();
@@ -51,7 +58,7 @@ function fetchQuestionsForCategory(category) {
     fetch(`${quizAPI}?categories=${category}&limit=2&difficulty=easy`)
         .then(response => response.json())
         .then(data => {
-            easyQuestions = data;
+            easy = data;
             fetchCount++;
             if (fetchCount === 3) {
                 showNextQuestion();
@@ -62,7 +69,7 @@ function fetchQuestionsForCategory(category) {
     fetch(`${quizAPI}?categories=${category}&limit=2&difficulty=medium`)
         .then(response => response.json())
         .then(data => {
-            mediumQuestions = data;
+            medium = data;
             fetchCount++;
             if (fetchCount === 3) {
                 showNextQuestion();
@@ -73,7 +80,7 @@ function fetchQuestionsForCategory(category) {
     fetch(`${quizAPI}?categories=${category}&limit=2&difficulty=hard`)
         .then(response => response.json())
         .then(data => {
-            hardQuestions = data;
+            hard = data;
             fetchCount++;
             if (fetchCount === 3) {
                 showNextQuestion();
@@ -85,34 +92,34 @@ function fetchQuestionsForCategory(category) {
 function showNextQuestion() {
     let questionData;
 
-    if (currentDifficulty === 'easy') {
-        if (currentEasyQuestionIndex >= easyQuestions.length) {
-            currentDifficulty = 'medium';
+    if (curDifficulty === 'easy') {
+        if (easyQuestionIndex >= easy.length) {
+            curDifficulty = 'medium';
             showNextQuestion();
             return;
         }
-        questionData = easyQuestions[currentEasyQuestionIndex];
-        currentEasyQuestionIndex++;
-    } else if (currentDifficulty === 'medium') {
-        if (currentMediumQuestionIndex >= mediumQuestions.length) {
-            currentDifficulty = 'hard';
+        questionData = easy[easyQuestionIndex];
+        easyQuestionIndex++;
+    } else if (curDifficulty === 'medium') {
+        if (mediumQuestionIndex >= medium.length) {
+            curDifficulty = 'hard';
             showNextQuestion();
             return;
         }
-        questionData = mediumQuestions[currentMediumQuestionIndex];
-        currentMediumQuestionIndex++;
-    } else if (currentDifficulty === 'hard') {
-        if (currentHardQuestionIndex >= hardQuestions.length) {
+        questionData = medium[mediumQuestionIndex];
+        mediumQuestionIndex++;
+    } else if (curDifficulty === 'hard') {
+        if (hardQuestionIndex >= hard.length) {
             endGame();
             return;
         }
-        questionData = hardQuestions[currentHardQuestionIndex];
-        currentHardQuestionIndex++;
+        questionData = hard[hardQuestionIndex];
+        hardQuestionIndex++;
     }
 
     const playerDivId = currentPlayer === 'Player 1' ? 'player-1-questions' : 'player-2-questions';
     document.getElementById(playerDivId).innerHTML = '';
-    displayQuestion(playerDivId, questionData, currentDifficulty, currentPlayer);
+    displayQuestion(playerDivId, questionData, curDifficulty, currentPlayer);
 
     currentPlayer = currentPlayer === 'Player 1' ? 'Player 2' : 'Player 1';
 }
